@@ -98,7 +98,6 @@ discordClient.once("ready", () => {
   console.log(
     `🤖 Bot Discord online como ${discordClient.user.tag}`
   );
-});
 
   console.log(
     `🏠 Servidor configurado: ${DISCORD_GUILD_ID}`
