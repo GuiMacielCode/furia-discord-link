@@ -23,12 +23,20 @@ app.use((req, res, next) => {
     res.header("Access-Control-Allow-Origin", origin);
   }
 
-  res.header("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
+  res.header(
+    "Access-Control-Allow-Methods",
+    "GET, POST, OPTIONS"
+  );
+
   res.header(
     "Access-Control-Allow-Headers",
     "Content-Type, Authorization, X-Furia-Secret"
   );
-  res.header("Access-Control-Allow-Credentials", "true");
+
+  res.header(
+    "Access-Control-Allow-Credentials",
+    "true"
+  );
 
   if (req.method === "OPTIONS") {
     return res.sendStatus(204);
@@ -46,8 +54,11 @@ const PORT = process.env.PORT || 3000;
 const PUBLIC_URL = (process.env.PUBLIC_URL || "")
   .replace(/\/$/, "");
 
-const CLIENT_ID = process.env.DISCORD_CLIENT_ID;
-const CLIENT_SECRET = process.env.DISCORD_CLIENT_SECRET;
+const CLIENT_ID =
+  process.env.DISCORD_CLIENT_ID;
+
+const CLIENT_SECRET =
+  process.env.DISCORD_CLIENT_SECRET;
 
 const REDIRECT_URI =
   process.env.DISCORD_REDIRECT_URI ||
@@ -92,60 +103,53 @@ function requireConfig() {
 }
 
 // ============================================================
+// ESCAPAR HTML
+// ============================================================
+
+function escapeHtml(value) {
+  return String(value).replace(
+    /[&<>"']/g,
+    function (c) {
+      return {
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        '"': "&quot;",
+        "'": "&#039;"
+      }[c];
+    }
+  );
+}
+
+// ============================================================
 // PÁGINA INICIAL
 // ============================================================
 
 app.get("/", (req, res) => {
-res.send(`
-  <html>
+  res.send(`
+    <html>
+      <head>
+        <title>Fúria - Login Discord</title>
+      </head>
 
-    <head>
-      <title>Login Fúria</title>
-    </head>
-
-    <body style="
-      font-family:Arial;
-      background:#111;
-      color:#fff;
-      text-align:center;
-      padding:60px
-    ">
-
-      <h1>🔥 Fúria</h1>
-
-      <p>
-        Você está vinculando o HaxBall
-        <b>${escapeHtml(item.nick)}</b>
-        ao Discord.
-      </p>
-
-      <a
-        href="${escapeHtml(discordUrl)}"
-        style="
-          display:inline-block;
-          padding:14px 22px;
-          background:#5865F2;
-          color:#fff;
-          text-decoration:none;
-          border-radius:8px;
-          font-weight:bold
-        "
-      >
-        Entrar com Discord
-      </a>
-
-      <p style="
-        margin-top:30px;
-        color:#aaa;
-        font-size:14px
+      <body style="
+        font-family:Arial;
+        background:#111;
+        color:#fff;
+        padding:40px;
+        text-align:center;
       ">
-        Este link expira em 10 minutos.
-      </p>
 
-    </body>
+        <h1>🔥 Fúria — Login Discord</h1>
 
-  </html>
-`);
+        <p>
+          O sistema de vinculação Discord ↔ HaxBall está online.
+        </p>
+
+      </body>
+    </html>
+  `);
+});
 
 // ============================================================
 // INICIAR LOGIN
@@ -170,7 +174,7 @@ app.post("/api/link/start", (req, res) => {
       .toString("hex");
 
     pendingLinks.set(token, {
-      auth,
+      auth: auth,
 
       nick: String(nick || "")
         .slice(0, 50),
@@ -184,13 +188,18 @@ app.post("/api/link/start", (req, res) => {
       ok: true,
 
       url:
-        `${PUBLIC_URL}/link/${token}`,
+        PUBLIC_URL +
+        "/link/" +
+        token,
 
       expiresIn: 600
     });
 
   } catch (err) {
-    console.error(err);
+    console.error(
+      "[FÚRIA] Erro ao iniciar login:",
+      err
+    );
 
     res.status(500).json({
       ok: false,
@@ -207,7 +216,8 @@ app.get("/link/:token", (req, res) => {
   try {
     requireConfig();
 
-    const token = req.params.token;
+    const token =
+      String(req.params.token || "");
 
     const item =
       pendingLinks.get(token);
@@ -215,28 +225,32 @@ app.get("/link/:token", (req, res) => {
     if (!item || item.expiresAt < Date.now()) {
       return res.status(410).send(`
         <html>
+          <head>
+            <title>Fúria - Link expirado</title>
+          </head>
+
           <body style="
             font-family:Arial;
             background:#111;
             color:#fff;
             text-align:center;
-            padding:60px
+            padding:60px;
           ">
+
             <h1>❌ Link expirado</h1>
 
             <p>
               Volte para a sala Fúria
               e use <b>!login</b> novamente.
             </p>
+
           </body>
         </html>
       `);
     }
 
     // ========================================================
-    // IMPORTANTE:
-    // O token vai no parâmetro "state".
-    // Não dependemos mais de sessão/cookie.
+    // CRIAR URL DO DISCORD
     // ========================================================
 
     const params =
@@ -249,7 +263,12 @@ app.get("/link/:token", (req, res) => {
       });
 
     const discordUrl =
-      `https://discord.com/oauth2/authorize?${params.toString()}`;
+      "https://discord.com/oauth2/authorize?" +
+      params.toString();
+
+    // ========================================================
+    // PÁGINA
+    // ========================================================
 
     res.send(`
       <html>
@@ -263,7 +282,7 @@ app.get("/link/:token", (req, res) => {
           background:#111;
           color:#fff;
           text-align:center;
-          padding:60px
+          padding:60px;
         ">
 
           <h1>🔥 Fúria</h1>
@@ -283,7 +302,7 @@ app.get("/link/:token", (req, res) => {
               color:#fff;
               text-decoration:none;
               border-radius:8px;
-              font-weight:bold
+              font-weight:bold;
             "
           >
             Entrar com Discord
@@ -292,7 +311,7 @@ app.get("/link/:token", (req, res) => {
           <p style="
             margin-top:30px;
             color:#aaa;
-            font-size:14px
+            font-size:14px;
           ">
             Este link expira em 10 minutos.
           </p>
@@ -303,7 +322,10 @@ app.get("/link/:token", (req, res) => {
     `);
 
   } catch (err) {
-    console.error(err);
+    console.error(
+      "[FÚRIA] Erro na página do link:",
+      err
+    );
 
     res.status(500).send(
       "Erro interno do servidor."
@@ -313,10 +335,6 @@ app.get("/link/:token", (req, res) => {
 
 // ============================================================
 // REDIRECIONAR PARA DISCORD
-// ============================================================
-//
-// Mantemos esta rota caso alguém acesse /auth/discord
-// diretamente. O fluxo principal já vai direto pelo state.
 // ============================================================
 
 app.get("/auth/discord", (req, res) => {
@@ -350,12 +368,17 @@ app.get("/auth/discord", (req, res) => {
         state: token
       });
 
-    res.redirect(
-      `https://discord.com/oauth2/authorize?${params.toString()}`
-    );
+    const discordUrl =
+      "https://discord.com/oauth2/authorize?" +
+      params.toString();
+
+    res.redirect(discordUrl);
 
   } catch (err) {
-    console.error(err);
+    console.error(
+      "[FÚRIA] Erro ao redirecionar:",
+      err
+    );
 
     res.status(500).send(
       "Erro interno do servidor."
@@ -367,260 +390,299 @@ app.get("/auth/discord", (req, res) => {
 // CALLBACK DO DISCORD
 // ============================================================
 
-app.get("/auth/discord/callback", async (req, res) => {
+app.get(
+  "/auth/discord/callback",
+  async (req, res) => {
 
-  try {
+    try {
+      requireConfig();
 
-    requireConfig();
+      const code =
+        String(req.query.code || "");
 
-    const code =
-      String(req.query.code || "");
+      const token =
+        String(req.query.state || "");
 
-    // ========================================================
-    // O token agora vem pelo "state".
-    // NÃO usamos mais req.session.linkToken.
-    // ========================================================
+      // ======================================================
+      // VERIFICAR CODE E STATE
+      // ======================================================
 
-    const token =
-      String(req.query.state || "");
+      if (!code || !token) {
+        return res.status(400).send(`
+          <html>
+            <body style="
+              font-family:Arial;
+              background:#111;
+              color:#fff;
+              text-align:center;
+              padding:60px;
+            ">
 
-    if (!code || !token) {
-      return res.status(400).send(`
-        <html>
-          <body style="
-            font-family:Arial;
-            background:#111;
-            color:#fff;
-            text-align:center;
-            padding:60px
-          ">
-            <h1>❌ Link inválido</h1>
+              <h1>❌ Link inválido</h1>
 
-            <p>
-              Volte para a sala Fúria
-              e use <b>!login</b> novamente.
-            </p>
-          </body>
-        </html>
-      `);
-    }
+              <p>
+                Volte para a sala Fúria
+                e use <b>!login</b> novamente.
+              </p>
 
-    const link =
-      pendingLinks.get(token);
+            </body>
+          </html>
+        `);
+      }
 
-    if (!link || link.expiresAt < Date.now()) {
-      return res.status(410).send(`
-        <html>
-          <body style="
-            font-family:Arial;
-            background:#111;
-            color:#fff;
-            text-align:center;
-            padding:60px
-          ">
-            <h1>❌ Link expirado</h1>
+      // ======================================================
+      // LOCALIZAR LINK
+      // ======================================================
 
-            <p>
-              Volte para a sala Fúria
-              e use <b>!login</b> novamente.
-            </p>
-          </body>
-        </html>
-      `);
-    }
+      const link =
+        pendingLinks.get(token);
 
-    // ========================================================
-    // TROCAR CODE PELO TOKEN DO DISCORD
-    // ========================================================
+      if (!link || link.expiresAt < Date.now()) {
+        return res.status(410).send(`
+          <html>
+            <body style="
+              font-family:Arial;
+              background:#111;
+              color:#fff;
+              text-align:center;
+              padding:60px;
+            ">
 
-    const tokenBody =
-      new URLSearchParams({
-        client_id: CLIENT_ID,
-        client_secret: CLIENT_SECRET,
-        grant_type: "authorization_code",
-        code,
-        redirect_uri: REDIRECT_URI
+              <h1>❌ Link expirado</h1>
+
+              <p>
+                Volte para a sala Fúria
+                e use <b>!login</b> novamente.
+              </p>
+
+            </body>
+          </html>
+        `);
+      }
+
+      // ======================================================
+      // TROCAR CODE PELO TOKEN DO DISCORD
+      // ======================================================
+
+      const tokenBody =
+        new URLSearchParams({
+          client_id:
+            CLIENT_ID,
+
+          client_secret:
+            CLIENT_SECRET,
+
+          grant_type:
+            "authorization_code",
+
+          code:
+            code,
+
+          redirect_uri:
+            REDIRECT_URI
+        });
+
+      const tokenResponse =
+        await fetch(
+          "https://discord.com/api/oauth2/token",
+          {
+            method: "POST",
+
+            headers: {
+              "Content-Type":
+                "application/x-www-form-urlencoded"
+            },
+
+            body:
+              tokenBody.toString()
+          }
+        );
+
+      if (!tokenResponse.ok) {
+        const erroTexto =
+          await tokenResponse.text();
+
+        console.error(
+          "[FÚRIA] Discord OAuth error:",
+          erroTexto
+        );
+
+        throw new Error(
+          "Discord recusou o código OAuth."
+        );
+      }
+
+      const oauth =
+        await tokenResponse.json();
+
+      if (!oauth.access_token) {
+        throw new Error(
+          "Discord não forneceu access_token."
+        );
+      }
+
+      // ======================================================
+      // BUSCAR USUÁRIO DO DISCORD
+      // ======================================================
+
+      const userResponse =
+        await fetch(
+          "https://discord.com/api/users/@me",
+          {
+            headers: {
+              Authorization:
+                (oauth.token_type || "Bearer") +
+                " " +
+                oauth.access_token
+            }
+          }
+        );
+
+      if (!userResponse.ok) {
+        const erroUsuario =
+          await userResponse.text();
+
+        console.error(
+          "[FÚRIA] Erro ao buscar usuário:",
+          erroUsuario
+        );
+
+        throw new Error(
+          "Não foi possível obter o usuário do Discord."
+        );
+      }
+
+      const user =
+        await userResponse.json();
+
+      // ======================================================
+      // PRESERVAR ESTATÍSTICAS EXISTENTES
+      // ======================================================
+
+      const oldAccount =
+        accounts.get(link.auth);
+
+      accounts.set(link.auth, {
+
+        discordId:
+          user.id,
+
+        discordName:
+          user.global_name ||
+          user.username,
+
+        nick:
+          link.nick,
+
+        linkedAt:
+          new Date().toISOString(),
+
+        wins:
+          oldAccount?.wins || 0,
+
+        losses:
+          oldAccount?.losses || 0
       });
 
-    const tokenResponse =
-      await fetch(
-        "https://discord.com/api/oauth2/token",
-        {
-          method: "POST",
+      // ======================================================
+      // FINALIZAR LINK
+      // ======================================================
 
-          headers: {
-            "Content-Type":
-              "application/x-www-form-urlencoded"
-          },
+      pendingLinks.delete(token);
 
-          body:
-            tokenBody.toString()
-        }
+      console.log(
+        "[FÚRIA DISCORD] Conta vinculada: " +
+        link.nick +
+        " -> " +
+        user.username
       );
 
-    if (!tokenResponse.ok) {
-      const erroTexto =
-        await tokenResponse.text();
+      // ======================================================
+      // PÁGINA DE SUCESSO
+      // ======================================================
+
+      res.send(`
+        <html>
+
+          <head>
+            <title>Fúria - Conta vinculada</title>
+          </head>
+
+          <body style="
+            font-family:Arial;
+            background:#111;
+            color:#fff;
+            text-align:center;
+            padding:60px;
+          ">
+
+            <h1>✅ Conta vinculada!</h1>
+
+            <p>
+              Discord:
+              <b>
+                ${escapeHtml(
+                  user.global_name ||
+                  user.username
+                )}
+              </b>
+            </p>
+
+            <p>
+              HaxBall:
+              <b>
+                ${escapeHtml(link.nick)}
+              </b>
+            </p>
+
+            <p style="
+              color:#7DFA89;
+              margin-top:30px;
+            ">
+              Você pode voltar para a sala Fúria.
+            </p>
+
+          </body>
+
+        </html>
+      `);
+
+    } catch (err) {
 
       console.error(
-        "Discord OAuth error:",
-        erroTexto
+        "[FÚRIA DISCORD] Erro no callback:",
+        err
       );
 
-      throw new Error(
-        "Discord recusou o código OAuth."
-      );
-    }
+      res.status(500).send(`
+        <html>
 
-    const oauth =
-      await tokenResponse.json();
+          <head>
+            <title>Fúria - Erro</title>
+          </head>
 
-    if (!oauth.access_token) {
-      throw new Error(
-        "Discord não forneceu access_token."
-      );
-    }
-
-    // ========================================================
-    // BUSCAR USUÁRIO DO DISCORD
-    // ========================================================
-
-    const userResponse =
-      await fetch(
-        "https://discord.com/api/users/@me",
-        {
-          headers: {
-            Authorization:
-              `${oauth.token_type || "Bearer"} ${oauth.access_token}`
-          }
-        }
-      );
-
-    if (!userResponse.ok) {
-      throw new Error(
-        "Não foi possível obter o usuário do Discord."
-      );
-    }
-
-    const user =
-      await userResponse.json();
-
-    // ========================================================
-    // PRESERVAR ESTATÍSTICAS EXISTENTES
-    // ========================================================
-
-    const oldAccount =
-      accounts.get(link.auth);
-
-    accounts.set(link.auth, {
-
-      discordId:
-        user.id,
-
-      discordName:
-        user.global_name ||
-        user.username,
-
-      nick:
-        link.nick,
-
-      linkedAt:
-        new Date().toISOString(),
-
-      wins:
-        oldAccount?.wins || 0,
-
-      losses:
-        oldAccount?.losses || 0
-    });
-
-    // ========================================================
-    // FINALIZAR LINK
-    // ========================================================
-
-    pendingLinks.delete(token);
-
-    console.log(
-      `[FÚRIA DISCORD] Conta vinculada: ${link.nick} -> ${user.username}`
-    );
-
-    // ========================================================
-    // PÁGINA DE SUCESSO
-    // ========================================================
-
-    res.send(`
-      <html>
-
-        <head>
-          <title>Fúria - Conta vinculada</title>
-        </head>
-
-        <body style="
-          font-family:Arial;
-          background:#111;
-          color:#fff;
-          text-align:center;
-          padding:60px
-        ">
-
-          <h1>✅ Conta vinculada!</h1>
-
-          <p>
-            Discord:
-            <b>
-              ${escapeHtml(
-                user.global_name ||
-                user.username
-              )}
-            </b>
-          </p>
-
-          <p>
-            HaxBall:
-            <b>
-              ${escapeHtml(link.nick)}
-            </b>
-          </p>
-
-          <p style="
-            color:#7DFA89;
-            margin-top:30px
+          <body style="
+            font-family:Arial;
+            background:#111;
+            color:#fff;
+            text-align:center;
+            padding:60px;
           ">
-            Você pode voltar para a sala Fúria.
-          </p>
 
-        </body>
+            <h1>❌ Erro ao concluir o login</h1>
 
-      </html>
-    `);
+            <p>
+              Volte para a sala Fúria
+              e use <b>!login</b> novamente.
+            </p>
 
-  } catch (err) {
+          </body>
 
-    console.error(
-      "[FÚRIA DISCORD] Erro no callback:",
-      err
-    );
-
-    res.status(500).send(`
-      <html>
-        <body style="
-          font-family:Arial;
-          background:#111;
-          color:#fff;
-          text-align:center;
-          padding:60px
-        ">
-          <h1>❌ Erro ao concluir o login</h1>
-
-          <p>
-            Volte para a sala Fúria
-            e use <b>!login</b> novamente.
-          </p>
-        </body>
-      </html>
-    `);
+        </html>
+      `);
+    }
   }
-});
+);
 
 // ============================================================
 // VERIFICAR STATUS DO JOGADOR
@@ -655,7 +717,8 @@ app.get("/api/link/status", (req, res) => {
 
   res.json({
 
-    linked: true,
+    linked:
+      true,
 
     discordId:
       account.discordId,
@@ -672,7 +735,8 @@ app.get("/api/link/status", (req, res) => {
     games:
       total,
 
-    winRate
+    winRate:
+      winRate
   });
 });
 
@@ -702,7 +766,9 @@ app.post("/api/stats/result", (req, res) => {
 
   if (
     !Array.isArray(auths) ||
-    ![1, 2].includes(Number(winnerTeam))
+    ![1, 2].includes(
+      Number(winnerTeam)
+    )
   ) {
 
     return res.status(400).json({
@@ -748,43 +814,27 @@ app.post("/api/stats/result", (req, res) => {
 });
 
 // ============================================================
-// ESCAPAR HTML
-// ============================================================
-
-function escapeHtml(value) {
-
-  return String(value)
-    .replace(
-      /[&<>"']/g,
-      c => ({
-        "&": "&amp;",
-        "<": "&lt;",
-        ">": "&gt;",
-        '"': "&quot;",
-        "'": "&#039;"
-      }[c])
-    );
-}
-
-// ============================================================
 // INICIAR SERVIDOR
 // ============================================================
 
 app.listen(PORT, () => {
 
   console.log(
-    `🔥 Fúria Discord Link online na porta ${PORT}`
+    "🔥 Fúria Discord Link online na porta " +
+    PORT
   );
 
   console.log(
-    `PUBLIC_URL: ${
+    "PUBLIC_URL: " +
+    (
       PUBLIC_URL ||
       "(não configurada)"
-    }`
+    )
   );
 
   console.log(
-    `REDIRECT_URI: ${REDIRECT_URI}`
+    "REDIRECT_URI: " +
+    REDIRECT_URI
   );
 
 });
