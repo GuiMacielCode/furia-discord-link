@@ -1121,8 +1121,6 @@ function escapeHtml(value) {
 
 }
 
-discordClient.login(process.env.DISCORD_BOT_TOKEN);
-
 // ============================================================
 // INICIAR SERVIDOR
 // ============================================================
