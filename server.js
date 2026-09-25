@@ -96,23 +96,56 @@ function requireConfig() {
 // ============================================================
 
 app.get("/", (req, res) => {
-  res.send(`
-    <html>
-      <body style="
-        font-family:Arial;
-        background:#111;
-        color:#fff;
-        padding:40px
-      ">
-        <h1>🔥 Fúria — Login Discord</h1>
+res.send(`
+  <html>
 
-        <p>
-          O sistema de vinculação Discord ↔ HaxBall está online.
-        </p>
-      </body>
-    </html>
-  `);
-});
+    <head>
+      <title>Login Fúria</title>
+    </head>
+
+    <body style="
+      font-family:Arial;
+      background:#111;
+      color:#fff;
+      text-align:center;
+      padding:60px
+    ">
+
+      <h1>🔥 Fúria</h1>
+
+      <p>
+        Você está vinculando o HaxBall
+        <b>${escapeHtml(item.nick)}</b>
+        ao Discord.
+      </p>
+
+      <a
+        href="${escapeHtml(discordUrl)}"
+        style="
+          display:inline-block;
+          padding:14px 22px;
+          background:#5865F2;
+          color:#fff;
+          text-decoration:none;
+          border-radius:8px;
+          font-weight:bold
+        "
+      >
+        Entrar com Discord
+      </a>
+
+      <p style="
+        margin-top:30px;
+        color:#aaa;
+        font-size:14px
+      ">
+        Este link expira em 10 minutos.
+      </p>
+
+    </body>
+
+  </html>
+`);
 
 // ============================================================
 // INICIAR LOGIN
