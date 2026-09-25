@@ -1,4 +1,3 @@
-```json
 {
   "name": "furia-discord-link",
   "version": "2.0.0",
@@ -16,4 +15,3 @@
     "discord.js": "^14.25.1"
   }
 }
-```
