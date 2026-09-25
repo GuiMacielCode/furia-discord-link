@@ -51,7 +51,7 @@ const CLIENT_SECRET = process.env.DISCORD_CLIENT_SECRET;
 
 const REDIRECT_URI =
   process.env.DISCORD_REDIRECT_URI ||
-  `${PUBLIC_URL}/auth/discord/callback`;
+  PUBLIC_URL + "/auth/discord/callback";
 
 // ============================================================
 // BANCO TEMPORÁRIO EM MEMÓRIA
